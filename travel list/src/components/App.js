@@ -7,24 +7,42 @@ const initialItems = [
 ];
 
 export default function App() {
+    const [items, setItems] = useState([]);
+
+
+    function handleAddItems(item) {
+        setItems((items) => [...items, item])
+    }
+    function deleteItems(id) {
+        setItems((items) => items.filter(item => item.id !== id))
+    }
+    function handleToggleItem(id) {
+        setItems((items) => items.map(item => item.id === id ? { ...item, packed: !item.packed } : item))
+    }
     return <div className="app">
         <Logo />
-        <Form />
-        <PackingList />
-        <Stats />
+        <Form onAddItmes={handleAddItems} />
+        <PackingList items={items} onDeleteItem={deleteItems} onToggleItens={handleToggleItem} />
+        <Stats items={items} />
     </div>
 }
 function Logo() {
     return <h1>Far Away</h1>;
 }
-function Form() {
+function Form({ onAddItmes }) {
     const [description, setDescription] = useState("");
     const [quantity, setQuantity] = useState(1);
+
+
+
+
     function handleSubmit(e) {
         //防止頁面刷新，這裡傳入的e是指event object
         e.preventDefault();
         if (!description) return;
-        const newItem = { description, quantity, packed: false }
+        const newItem = { description, quantity, packed: false, id: Date.now() }
+        console.log(newItem);
+        onAddItmes(newItem);
         setDescription("");
         setQuantity(1);
     }
@@ -40,25 +58,41 @@ function Form() {
     );
 }
 
-function PackingList() {
-    return <ul className="LIST">
-        {initialItems.map((items) => <Item item={items} key={items.id} />)}
-    </ul>;
+function PackingList({ items, onDeleteItem, onToggleItens }) {
+    return (
+        <ul className="LIST">
+            {items.map((item) => <Item item={item} key={item.id} onDeleteItem={onDeleteItem} onToggleItens={onToggleItens} />)}
+        </ul>
+    )
 }
 
-function Item({ item }) {
+function Item({ item, onDeleteItem, onToggleItens }) {
     return (
         <li >
+            <input type="checkbox" vlaue={item.checked} onChange={() => onToggleItens(item.id)} />
             <span style={item.packed ? { textDecoration: "line-through" } : {}}>{item.quantity}{item.description}</span>
-            <button>❌</button>
+            <button onClick={() => onDeleteItem(item.id)}>❌</button>
         </li >
     )
 }
 
-function Stats() {
+function Stats({ items }) {
+    /*   if (!items.length)
+          return (
+              <p className="stats">
+                  <em>Start adding some items to your packing list!</em>
+              </p>
+          );
+   */
+    const numItems = items.length;
+    const numPacked = items.filter((item) => item.packed).length;
     return (
         <footer className="stats">
-            <em>You have x items on your list, and you already packed x items</em>
+            <em>
+                {numItems === 0 ?
+                    "You got everything! Ready to go"
+                    : `You have ${numItems} items on your list, and you already packed ${numPacked} items`}
+            </em>
         </footer>
     )
 }
